@@ -48,34 +48,34 @@ def filter_fastq_by_kraken2(
                                 cols = line.split("\t")
                                 classifications[cols[1]] = cols[0]
     
-        for read in value['reads']:
-                seqs = read_fastq_seqs(read)
-                classified_fp = os.path.join(str(classified_dir), os.path.basename(read))
-                unclassified_fp = os.path.join(str(unclassified_dir), os.path.basename(read))
-                with gzip.open(classified_fp, "wt") as seqs_classified, gzip.open(unclassified_fp, "wt") as seqs_unclassified:
-                        for seq in seqs:
-                                seq_header, sequence, qual_header, qual = seq
-                                classification = classifications[seq_header.strip("@").split(" ")[0]]
-                                if classification == "U":
-                                        seqs_unclassified.write(seq_header)
-                                        seqs_unclassified.write("\n")
-                                        seqs_unclassified.write(sequence)
-                                        seqs_unclassified.write("\n")
-                                        seqs_unclassified.write(qual_header)
-                                        seqs_unclassified.write("\n")
-                                        seqs_unclassified.write(qual)
-                                        seqs_unclassified.write("\n")
-                                elif classification == "C":
-                                        seqs_classified.write(seq_header)
-                                        seqs_classified.write("\n")
-                                        seqs_classified.write(sequence)
-                                        seqs_classified.write("\n")
-                                        seqs_classified.write(qual_header)
-                                        seqs_classified.write("\n")
-                                        seqs_classified.write(qual)
-                                        seqs_classified.write("\n")
-                                else:
-                                        print("raise an error")
+                for read in value['reads']:
+                        seqs = read_fastq_seqs(read)
+                        classified_fp = os.path.join(str(classified_dir), os.path.basename(read))
+                        unclassified_fp = os.path.join(str(unclassified_dir), os.path.basename(read))
+                        with gzip.open(classified_fp, "wt") as seqs_classified, gzip.open(unclassified_fp, "wt") as seqs_unclassified:
+                                for seq in seqs:
+                                        seq_header, sequence, qual_header, qual = seq
+                                        classification = classifications[seq_header.strip("@").split(" ")[0]]
+                                        if classification == "U":
+                                                seqs_unclassified.write(seq_header)
+                                                seqs_unclassified.write("\n")
+                                                seqs_unclassified.write(sequence)
+                                                seqs_unclassified.write("\n")
+                                                seqs_unclassified.write(qual_header)
+                                                seqs_unclassified.write("\n")
+                                                seqs_unclassified.write(qual)
+                                                seqs_unclassified.write("\n")
+                                        elif classification == "C":
+                                                seqs_classified.write(seq_header)
+                                                seqs_classified.write("\n")
+                                                seqs_classified.write(sequence)
+                                                seqs_classified.write("\n")
+                                                seqs_classified.write(qual_header)
+                                                seqs_classified.write("\n")
+                                                seqs_classified.write(qual)
+                                                seqs_classified.write("\n")
+                                        else:
+                                                print("raise an error")
 
 
 
