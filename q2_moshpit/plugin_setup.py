@@ -7,52 +7,41 @@
 # ----------------------------------------------------------------------------
 import importlib
 
-from q2_quality_control.plugin_setup import (
-    filter_parameters, filter_parameter_descriptions
-)
-from qiime2.plugin import Metadata
-from q2_moshpit.eggnog.types import (
-    EggnogHmmerIdmapDirectoryFmt, EggnogHmmerIdmapFileFmt, EggnogHmmerIdmap
-)
-from q2_moshpit.busco.types import (
-    BUSCOResultsFormat, BUSCOResultsDirectoryFormat, BuscoDatabaseDirFmt,
-    BUSCOResults, BuscoDB
-)
+from q2_quality_control.plugin_setup import (filter_parameter_descriptions,
+                                             filter_parameters)
 from q2_types.bowtie2 import Bowtie2Index
-from q2_types.profile_hmms import ProfileHMM, MultipleProtein, PressedProtein
 from q2_types.distance_matrix import DistanceMatrix
-from q2_types.feature_data import (
-    FeatureData, Sequence, Taxonomy, ProteinSequence, SequenceCharacteristics
-)
-from q2_types.feature_table import (
-    FeatureTable, Frequency, PresenceAbsence, RelativeFrequency
-)
-from q2_types.per_sample_sequences import (
-    SequencesWithQuality, PairedEndSequencesWithQuality,
-    JoinedSequencesWithQuality, MAGs, Contigs
-)
-from q2_types.sample_data import SampleData
-from q2_types.feature_map import FeatureMap, MAGtoContigs
-from qiime2.core.type import (
-    Bool, Range, Int, Str, Float, List, Choices, Visualization
-)
-from qiime2.core.type import (Properties, TypeMap)
-from qiime2.plugin import (Plugin, Citations)
-import q2_moshpit._examples as ex
-import q2_moshpit
+from q2_types.feature_data import (FeatureData, ProteinSequence, Sequence,
+                                   SequenceCharacteristics, Taxonomy)
 from q2_types.feature_data_mag import MAG
-from q2_types.genome_data import (
-    NOG, Orthologs, GenomeData, Loci, Genes, Proteins
-)
+from q2_types.feature_map import FeatureMap, MAGtoContigs
+from q2_types.feature_table import (FeatureTable, Frequency, PresenceAbsence,
+                                    RelativeFrequency)
+from q2_types.genome_data import (NOG, Genes, GenomeData, Loci, Orthologs,
+                                  Proteins)
 from q2_types.kaiju import KaijuDB
-from q2_types.kraken2 import (
-    Kraken2Reports, Kraken2Outputs, Kraken2DB, Kraken2DBReport
-)
-from q2_types.kraken2 import BrackenDB
-from q2_types.per_sample_sequences import AlignmentMap
-from q2_types.reference_db import (
-    ReferenceDB, Diamond, Eggnog, NCBITaxonomy, EggnogProteinSequences,
-)
+from q2_types.kraken2 import (BrackenDB, Kraken2DB, Kraken2DBReport,
+                              Kraken2Outputs, Kraken2Reports)
+from q2_types.per_sample_sequences import (AlignmentMap, Contigs,
+                                           JoinedSequencesWithQuality, MAGs,
+                                           PairedEndSequencesWithQuality,
+                                           SequencesWithQuality)
+from q2_types.profile_hmms import MultipleProtein, PressedProtein, ProfileHMM
+from q2_types.reference_db import (Diamond, Eggnog, EggnogProteinSequences,
+                                   NCBITaxonomy, ReferenceDB)
+from q2_types.sample_data import SampleData
+from qiime2.core.type import (Bool, Choices, Float, Int, List, Properties,
+                              Range, Str, TypeMap, TypeMatch, Visualization)
+from qiime2.plugin import Citations, Metadata, Plugin
+
+import q2_moshpit
+import q2_moshpit._examples as ex
+from q2_moshpit.busco.types import (BuscoDatabaseDirFmt, BuscoDB, BUSCOResults,
+                                    BUSCOResultsDirectoryFormat,
+                                    BUSCOResultsFormat)
+from q2_moshpit.eggnog.types import (EggnogHmmerIdmap,
+                                     EggnogHmmerIdmapDirectoryFmt,
+                                     EggnogHmmerIdmapFileFmt)
 
 citations = Citations.load('citations.bib', package='q2_moshpit')
 
@@ -1799,6 +1788,44 @@ plugin.pipelines.register_function(
                 '2 has shape (N x P), the resulting table will have shape '
                 '(M x P). Note that the tables must be identical in the N '
                 'dimension.',
+    citations=[]
+)
+
+#T_filter_kraken_in, T_filter_kraken_out = TypeMap(
+#    {SampleData[SequencesWithQuality]:SampleData[SequencesWithQuality],
+#     SampleData[PairedEndSequencesWithQuality]:SampleData[PairedEndSequencesWithQuality],
+#     SampleData[JoinedSequencesWithQuality]:SampleData[JoinedSequencesWithQuality]}
+#)
+
+T_filter_seqs = TypeMatch(
+    [SampleData[SequencesWithQuality],
+     SampleData[PairedEndSequencesWithQuality],
+     SampleData[JoinedSequencesWithQuality]]
+)
+
+plugin.methods.register_function(
+    function=q2_moshpit.kraken2.filter_seqs_by_kraken2_hits,
+    inputs={
+        "seqs": T_filter_seqs,
+        "hits": SampleData[Kraken2Outputs],
+    },
+    parameters={},
+    outputs=[
+        ('classified_seqs', T_filter_seqs), 
+        ('unclassified_seqs', T_filter_seqs)
+    ],
+    input_descriptions={
+        "seqs": "Reads to be filtered.",
+        "hits": "Kraken2 hits"
+    },
+    parameter_descriptions={},
+    output_descriptions={
+        "classified_seqs": "reads that kraken2 classified",
+        "unclassified_seqs": "reads that Kraken2 failed to classify",
+    },
+    name="filter sequences by Kraken2 hits",
+    description="Splits reads by whether they are classified or unclassified by Kraken2. "
+    "Identifiers of sequences must exactly match identifiers of  hits, i.e., the sequences used to generate Kraken2 hits.",
     citations=[]
 )
 
